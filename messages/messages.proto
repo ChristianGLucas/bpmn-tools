@@ -1,0 +1,365 @@
+// This file defines the data contracts (messages) for your Axiom package.
+// Every node's --input and --output refers to a message defined here.
+//
+// Run `axiom create message <Name>` to scaffold a new message below.
+// Run `axiom generate` to compile these definitions into language bindings in gen/.
+//
+// DOCUMENTATION
+//   Comments written directly above a message or field declaration are extracted
+//   automatically at publish time and shown in the Axiom registry as documentation.
+//   Write your descriptions there — no separate doc files needed.
+//
+//   Leading comment  (no blank line before the declaration) → registry description ✓
+//   Detached comment (blank line before the declaration)    → ignored by registry  ✗
+//
+// This file is yours to edit. Axiom only appends new message blocks — it never
+// overwrites or removes content you have written.
+
+syntax = "proto3";
+
+package christiangeorgelucas.bpmn_tools;
+
+option java_package = "gen";
+option java_outer_classname = "Messages";
+
+// Data contracts for christiangeorgelucas/bpmn-tools — stateless BPMN 2.0
+// (business process model) nodes wrapping Camunda's BPMN Model API
+// (org.camunda.bpm.model:camunda-bpmn-model + camunda-xml-model, both
+// Apache-2.0), the standalone Java model layer Camunda's own process engine
+// is built on. Every node parses caller-supplied BPMN 2.0 XML through the
+// SAME hardened Camunda parser (BPMN 2.0 XSD schema validation, XXE-hardened
+// DocumentBuilderFactory — DOCTYPE disallowed, external general/parameter
+// entities disabled, XInclude disabled) and reports a structured `error`
+// instead of crashing on malformed or oversized input.
+//
+// CANONICAL INPUT. `BpmnDocument` (raw BPMN 2.0 XML text) is the shared input
+// every extraction/inspection node takes. It carries no `error` field of its
+// own (mirroring christiangeorgelucas/graph-tools' bare `Graph` envelope) —
+// every node's own *Result output message carries the `error` instead, so a
+// Document can flow untouched from node to node inside a flow.
+//
+// SIZE BOUND. `xml` is capped at 5 MiB (ample for any real process
+// definition, including embedded diagram interchange (BPMNDI) markup);
+// oversized input is rejected by a raw byte-length check BEFORE parsing.
+//
+// COMPOSABILITY WITH graph-tools. `ToGraph` emits `ProcessGraphResult`, whose
+// `directed`/`nodes`/`edges` fields and `ProcessGraphNode{id,label}` /
+// `ProcessGraphEdge{from,to,weight,explicit_zero_weight}` shapes deliberately
+// mirror christiangeorgelucas/graph-tools' `Graph`/`GraphNode`/`GraphEdge`
+// field-for-field, so mapping a process's flow-node graph into graph-tools'
+// TopologicalSort/DetectCycle/Describe/Centrality inside a flow is a
+// mechanical field rename, not a redesign.
+
+// The canonical BPMN 2.0 document envelope: raw XML text. Every extraction
+// node in this package takes this as (or nests this inside) its input.
+message BpmnDocument {
+  // BPMN 2.0 XML content, UTF-8 text. Required, non-blank, capped at 5 MiB
+  // (5,242,880 bytes) measured on the raw UTF-8 encoding before any parsing
+  // is attempted. Oversized or blank input is rejected via the consuming
+  // node's `error` field rather than being parsed.
+  string xml = 1;
+}
+
+// One BPMN `process` element's identifying metadata.
+message ProcessInfo {
+  // The process's `id` attribute.
+  string id = 1;
+  // The process's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The process's `isExecutable` attribute.
+  bool is_executable = 3;
+}
+
+// Top-level metadata extracted from a BPMN document's root `definitions`
+// element — the cheap triage node to run before a more targeted extraction.
+message ParseResult {
+  // The root `definitions` element's `id` attribute. Empty if unset.
+  string definitions_id = 1;
+  // The `targetNamespace` attribute (required by the BPMN 2.0 schema).
+  string target_namespace = 2;
+  // The `exporter` attribute — which tool produced this file. Empty if unset.
+  string exporter = 3;
+  // The `exporterVersion` attribute. Empty if unset.
+  string exporter_version = 4;
+  // Every top-level `process` element defined in this document, in document
+  // order.
+  repeated ProcessInfo processes = 5;
+  // Structured error message. Empty on success. Set instead of crashing when
+  // `xml` is blank, oversized, not well-formed XML, or does not conform to
+  // the BPMN 2.0 XSD schema.
+  string error = 6;
+}
+
+// The result of validating a BPMN document against the BPMN 2.0 XSD schema
+// (the same schema Camunda's own parser enforces on every read).
+message ValidateResult {
+  // True when the document is well-formed XML AND conforms to the BPMN 2.0
+  // schema. False for any rejection by Camunda's parser OR when the request
+  // itself could not be attempted (check `error` first: `valid` is also
+  // false in that case, but for a different reason).
+  bool valid = 1;
+  // The parser's rejection detail message — covers BOTH a BPMN 2.0 schema
+  // violation (e.g. "cvc-complex-type.4: Attribute 'sourceRef' must appear
+  // on element 'bpmn:sequenceFlow'.") AND XML that is not even well-formed.
+  // Camunda's parser does not expose these as separable failure kinds (both
+  // throw from the same call), and both legitimately mean "this is not
+  // valid BPMN 2.0" — exactly what this node answers. Empty when `valid` is
+  // true or when `error` is set instead.
+  string violation = 2;
+  // Structured error message for a request-level failure that never reached
+  // the parser at all (blank or oversized `xml`, over 5 MiB) — distinct from
+  // `violation`, which is the parser's own rejection of well-attempted
+  // input. Empty on success.
+  string error = 3;
+}
+
+// One BPMN task-family activity (Task, UserTask, ServiceTask, ScriptTask,
+// SendTask, ReceiveTask, ManualTask, or BusinessRuleTask).
+message TaskInfo {
+  // The task's `id` attribute.
+  string id = 1;
+  // The task's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The specific BPMN element name: "task", "userTask", "serviceTask",
+  // "scriptTask", "sendTask", "receiveTask", "manualTask", or
+  // "businessRuleTask".
+  string type = 3;
+  // The `id` of the `process` element that directly contains this task (the
+  // task's own top-level process — a task nested inside a sub-process still
+  // reports its enclosing top-level process's id).
+  string process_id = 4;
+}
+
+// Every task-family activity in a BPMN document.
+message TaskListResult {
+  // Every task in document order.
+  repeated TaskInfo tasks = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// One BPMN gateway (branching/merging construct).
+message GatewayInfo {
+  // The gateway's `id` attribute.
+  string id = 1;
+  // The gateway's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The specific gateway kind: "exclusiveGateway", "parallelGateway",
+  // "inclusiveGateway", "eventBasedGateway", or "complexGateway".
+  string type = 3;
+  // The BPMN `gatewayDirection` attribute: "Unspecified", "Converging",
+  // "Diverging", or "Mixed".
+  string gateway_direction = 4;
+  // The `id` of the gateway's enclosing top-level process.
+  string process_id = 5;
+}
+
+// Every gateway in a BPMN document.
+message GatewayListResult {
+  // Every gateway in document order.
+  repeated GatewayInfo gateways = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// One BPMN flow event (start, end, intermediate, or boundary).
+message EventInfo {
+  // The event's `id` attribute.
+  string id = 1;
+  // The event's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // Which event category this is: "startEvent", "endEvent",
+  // "intermediateCatchEvent", "intermediateThrowEvent", or "boundaryEvent".
+  string category = 3;
+  // The event definition's kind, derived from the FIRST eventDefinition
+  // child (an event may in principle carry more than one; BPMN 2.0's common
+  // usage is exactly zero or one): "message", "timer", "signal", "error",
+  // "escalation", "compensate", "conditional", "link", "terminate", or
+  // "cancel". Empty for a plain (\"none\") event with no event definition.
+  string event_definition_type = 4;
+  // For a startEvent or boundaryEvent: whether it is interrupting. Always
+  // true for a startEvent/boundaryEvent that omits the attribute (the BPMN
+  // 2.0 schema default). Meaningless (always false) for end/intermediate
+  // events, which have no interrupting semantics.
+  bool interrupting = 5;
+  // For a boundaryEvent only: the `id` of the activity it is attached to.
+  // Empty for every other category.
+  string attached_to_ref = 6;
+  // The `id` of the event's enclosing top-level process.
+  string process_id = 7;
+}
+
+// Every flow event in a BPMN document.
+message EventListResult {
+  // Every event in document order.
+  repeated EventInfo events = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// One BPMN `sequenceFlow` connecting two flow nodes.
+message SequenceFlowInfo {
+  // The sequence flow's `id` attribute.
+  string id = 1;
+  // The sequence flow's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The `id` of the source flow node (`sourceRef`).
+  string source_ref = 3;
+  // The `id` of the target flow node (`targetRef`).
+  string target_ref = 4;
+  // The condition expression's text body, when this sequence flow carries a
+  // `conditionExpression`. Empty for an unconditional flow.
+  string condition_expression = 5;
+  // The `id` of the sequence flow's enclosing top-level process.
+  string process_id = 6;
+}
+
+// Every sequence flow in a BPMN document — the process's edge list.
+message SequenceFlowListResult {
+  // Every sequence flow in document order.
+  repeated SequenceFlowInfo flows = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// One BPMN `lane` within a pool, and the flow nodes assigned to it.
+message LaneInfo {
+  // The lane's `id` attribute.
+  string id = 1;
+  // The lane's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The `id`s of every flow node (`flowNodeRef`) assigned to this lane, in
+  // document order.
+  repeated string flow_node_refs = 3;
+}
+
+// One BPMN `participant` (pool) and its lanes, if any.
+message PoolInfo {
+  // The participant's `id` attribute.
+  string id = 1;
+  // The participant's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // The `id` of the `process` this pool references (`processRef`). Empty for
+  // a "black-box" pool with no attached process.
+  string process_ref = 3;
+  // The pool's lanes, in document order. Empty when the pool's process has
+  // no `laneSet`.
+  repeated LaneInfo lanes = 4;
+}
+
+// Every pool (participant) and its lanes in a BPMN collaboration diagram —
+// empty `pools` is normal for a document with no `collaboration` element
+// (a bare, single-process BPMN file has no pools at all).
+message CollaborationResult {
+  // Every pool in document order.
+  repeated PoolInfo pools = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// One BPMN embedded sub-process or call activity.
+message SubProcessInfo {
+  // The element's `id` attribute.
+  string id = 1;
+  // The element's `name` attribute. Empty when unnamed.
+  string name = 2;
+  // "subProcess" (an embedded sub-process, expanded inline) or
+  // "callActivity" (a reference to a separately-defined, reusable process).
+  string type = 3;
+  // Whether this is an event sub-process (triggered by an event rather than
+  // sequence flow). Always false for a callActivity.
+  bool triggered_by_event = 4;
+  // For a callActivity only: the `id` of the called process (`calledElement`).
+  // Empty for a subProcess and for a callActivity with no `calledElement`.
+  string called_element = 5;
+  // The `id` of the enclosing top-level process (the parent process this
+  // sub-process/call activity is directly or indirectly nested within).
+  string parent_process_id = 6;
+}
+
+// Every embedded sub-process and call activity in a BPMN document.
+message SubProcessListResult {
+  // Every sub-process/call activity in document order.
+  repeated SubProcessInfo sub_processes = 1;
+  // Structured error message. Empty on success.
+  string error = 2;
+}
+
+// Request to look up a single element by its BPMN `id` attribute.
+message ElementLookupRequest {
+  // The document to search.
+  BpmnDocument document = 1;
+  // The `id` of the element to look up.
+  string element_id = 2;
+}
+
+// Details of a single BPMN element, found by id.
+message ElementDetail {
+  // True when an element with the requested id was found. When false, every
+  // other field except `error` is meaningless.
+  bool found = 1;
+  // The element's `id` attribute, echoed back.
+  string id = 2;
+  // The element's `name` attribute, when it has one. Empty otherwise.
+  string name = 3;
+  // The specific BPMN element name, e.g. "userTask", "exclusiveGateway",
+  // "sequenceFlow", "participant", "startEvent".
+  string element_type = 4;
+  // For a flow node: the `id`s of every incoming sequence flow. Empty for a
+  // non-flow-node element (e.g. a sequenceFlow, participant, or lane).
+  repeated string incoming = 5;
+  // For a flow node: the `id`s of every outgoing sequence flow. Empty for a
+  // non-flow-node element.
+  repeated string outgoing = 6;
+  // Structured error message for a request-level failure (blank/oversized
+  // `document.xml`, not well-formed, fails schema validation, or a blank
+  // `element_id`). Empty on success — including when the lookup legitimately
+  // finds nothing (`found = false` with `error` empty).
+  string error = 7;
+}
+
+// A single vertex of a BPMN process graph — one flow node (task, gateway,
+// or event). Field names deliberately mirror
+// christiangeorgelucas/graph-tools' `GraphNode`.
+message ProcessGraphNode {
+  // The flow node's `id` attribute — unique within the document.
+  string id = 1;
+  // The flow node's `name` attribute if set, else its `id` (never empty, so
+  // every vertex has a usable label).
+  string label = 2;
+}
+
+// A single directed edge of a BPMN process graph — one sequence flow. Field
+// names deliberately mirror christiangeorgelucas/graph-tools' `GraphEdge`.
+message ProcessGraphEdge {
+  // Source vertex id (`sourceRef`).
+  string from = 1;
+  // Target vertex id (`targetRef`).
+  string to = 2;
+  // Always 1.0 — BPMN sequence flows carry no native numeric weight. Present
+  // so this message is structurally interchangeable with graph-tools'
+  // `GraphEdge` in a flow adapter.
+  double weight = 3;
+  // Always false. Present for the same structural-interchangeability reason
+  // as `weight`.
+  bool explicit_zero_weight = 4;
+}
+
+// A BPMN process re-expressed as a directed graph of flow nodes and sequence
+// flows — feed this into christiangeorgelucas/graph-tools (TopologicalSort to
+// get an execution order, DetectCycle to find a loop, Describe for summary
+// stats, Centrality to find the busiest step) via a field-mapping adapter.
+message ProcessGraphResult {
+  // Always true: BPMN sequence flows are inherently directed.
+  bool directed = 1;
+  // One vertex per flow node (task, gateway, or event) across every
+  // top-level process in the document. A document with more than one
+  // top-level process yields one combined graph — flow nodes never share
+  // sequence flows across processes, so each process forms its own
+  // connected component within it.
+  repeated ProcessGraphNode nodes = 2;
+  // One edge per sequence flow.
+  repeated ProcessGraphEdge edges = 3;
+  // Structured error message. Empty on success.
+  string error = 4;
+}

@@ -1,0 +1,61 @@
+name: christiangeorgelucas/bpmn-tools
+version: 0.1.0
+language: java
+description: Composable Axiom BPMN 2.0 (business-process model) nodes wrapping Camunda's BPMN Model API (org.camunda.bpm.model, Apache-2.0) — parse, validate, and structurally extract processes, tasks, gateways, events, sequence flows, pools/lanes, and sub-processes from BPMN 2.0 XML, plus a process-graph export for downstream graph-algorithm analysis. Offline, deterministic, stateless.
+author: Christian George Lucas
+license: MIT
+tags:
+    - bpmn
+    - business-process-model
+    - workflow
+    - process-mining
+    - camunda
+    - xml
+    - process-graph
+    - gateway
+    - sequence-flow
+build:
+    maven_deps:
+        - org.camunda.bpm.model:camunda-bpmn-model:7.23.0
+        - org.camunda.bpm.model:camunda-xml-model:7.23.0
+nodes:
+    - name: Parse
+      description: Parse a BPMN 2.0 XML document and extract its root definitions metadata (id, target namespace, exporter) and the list of top-level processes it defines.
+      input: BpmnDocument
+      output: ParseResult
+    - name: Validate
+      description: Validate a BPMN 2.0 XML document against the official BPMN 2.0 XSD schema, the same schema Camunda's own parser enforces.
+      input: BpmnDocument
+      output: ValidateResult
+    - name: ListTasks
+      description: Extract every task-family activity (Task, UserTask, ServiceTask, ScriptTask, SendTask, ReceiveTask, ManualTask, BusinessRuleTask) from a BPMN 2.0 document.
+      input: BpmnDocument
+      output: TaskListResult
+    - name: ListGateways
+      description: Extract every gateway (Exclusive, Parallel, Inclusive, EventBased, Complex) from a BPMN 2.0 document.
+      input: BpmnDocument
+      output: GatewayListResult
+    - name: ListEvents
+      description: Extract every flow event (start, end, intermediate catch/throw, boundary) from a BPMN 2.0 document, including its event-definition kind (message/timer/signal/error/etc).
+      input: BpmnDocument
+      output: EventListResult
+    - name: ListSequenceFlows
+      description: Extract every sequence flow (source, target, condition expression) from a BPMN 2.0 document.
+      input: BpmnDocument
+      output: SequenceFlowListResult
+    - name: ListPoolsAndLanes
+      description: Extract every pool (participant) and its lanes, with the flow nodes assigned to each lane, from a BPMN 2.0 collaboration diagram.
+      input: BpmnDocument
+      output: CollaborationResult
+    - name: ListSubProcesses
+      description: Extract every embedded sub-process and call activity from a BPMN 2.0 document.
+      input: BpmnDocument
+      output: SubProcessListResult
+    - name: GetElementById
+      description: Look up a single BPMN element by its id attribute and return its type, name, and (for flow nodes) incoming/outgoing sequence flow ids.
+      input: ElementLookupRequest
+      output: ElementDetail
+    - name: ToGraph
+      description: Re-express a BPMN process's flow nodes and sequence flows as a directed graph, field-compatible with christiangeorgelucas/graph-tools' Graph envelope, for downstream graph-algorithm analysis.
+      input: BpmnDocument
+      output: ProcessGraphResult
