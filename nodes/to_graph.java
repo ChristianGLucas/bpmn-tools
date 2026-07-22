@@ -23,9 +23,15 @@ public class ToGraph {
      * envelope field-for-field, so mapping this result into
      * TopologicalSort (execution order), DetectCycle (find a loop),
      * Describe (summary stats), or Centrality (busiest step) inside a flow
-     * is a mechanical field rename. Blank input, oversized input (over 5
-     * MiB), malformed XML, or input that fails BPMN 2.0 schema validation
-     * all return a structured {@code error} instead of crashing.
+     * is a mechanical field rename. {@code nodes} order is grouped by
+     * concrete BPMN element type (a consequence of the underlying model
+     * API's polymorphic type query), NOT document order — a graph has no
+     * inherent node ordering, so this is never a correctness concern, but
+     * don't rely on it matching {@code ListTasks}/{@code ListGateways}/
+     * {@code ListEvents}'s own (also type-grouped, not document-order)
+     * ordering either. Blank input, oversized input (over 5 MiB), malformed
+     * XML, or input that fails BPMN 2.0 schema validation all return a
+     * structured {@code error} instead of crashing.
      *
      * <p>{@code ax} is the AxiomContext (ADR-001): every platform capability is
      * reached through it — {@code ax.log()}, {@code ax.secrets()},
