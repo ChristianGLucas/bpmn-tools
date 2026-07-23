@@ -1,6 +1,6 @@
 # christiangeorgelucas/bpmn-tools
 
-Composable [Axiom](https://axiom.dev) nodes for **BPMN 2.0** (business process
+Composable [Axiom](https://axiomide.com) nodes for **BPMN 2.0** (business process
 model) parsing, validation, and structural extraction — tasks, gateways,
 events, sequence flows, pools/lanes, and sub-processes. Built for the Axiom
 marketplace.
