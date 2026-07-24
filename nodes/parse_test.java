@@ -62,12 +62,6 @@ public class ParseTest {
         assertFalse(result.getError().isEmpty());
     }
 
-    @Test
-    public void testParse_oversizedXmlReturnsStructuredError() {
-        AxiomContext ax = TestSupport.ax();
-        ParseResult result = Parse.parse(ax, BpmnDocument.newBuilder().setXml(TestSupport.oversizedXml()).build());
-        assertFalse(result.getError().isEmpty());
-    }
 
     @Test
     public void testParse_isDeterministic() {

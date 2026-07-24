@@ -25,7 +25,7 @@ public class GetElementById {
      * depended on them would silently under-report for any document that
      * omits them. {@code found = false} (with {@code error} empty) is a
      * legitimate result: no element with that id exists in the document.
-     * Blank input, oversized input (over 5 MiB), malformed XML, input that
+     * Blank input, malformed XML, input that
      * fails BPMN 2.0 schema validation, or a blank {@code element_id} all
      * return a structured {@code error} instead of crashing.
      *

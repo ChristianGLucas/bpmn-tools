@@ -198,17 +198,4 @@ final class TestSupport {
             + "  </bpmn:process>\n"
             + "</bpmn:definitions>\n";
 
-    /** A syntactically well-formed but oversized document — bigger than the
-     * package's 5 MiB input cap — used to prove the size check runs BEFORE
-     * any parsing is attempted. */
-    static String oversizedXml() {
-        StringBuilder sb = new StringBuilder(BpmnUtil.MAX_XML_BYTES + 1024);
-        sb.append("<bpmn:definitions xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" id=\"D1\" targetNamespace=\"ns\">\n");
-        sb.append("<!-- ");
-        while (sb.length() < BpmnUtil.MAX_XML_BYTES + 512) {
-            sb.append("padding-to-exceed-the-five-mebibyte-input-cap-");
-        }
-        sb.append(" -->\n</bpmn:definitions>\n");
-        return sb.toString();
-    }
 }

@@ -17,9 +17,9 @@ public class Validate {
      * on every read. Returns {@code valid = true} only when the document is
      * well-formed XML AND schema-conformant.
      *
-     * <p>Distinguishes two distinct failure kinds. Blank or oversized input
-     * (over 5 MiB) sets {@code error}: the request itself could not even be
-     * attempted. Everything Camunda's parser itself rejects — a schema
+     * <p>Distinguishes two distinct failure kinds. Blank input sets
+     * {@code error}: the request itself could not even be attempted.
+     * Everything Camunda's parser itself rejects — a schema
      * violation (verified directly against the library: e.g. a
      * {@code sequenceFlow} missing its required {@code sourceRef} fails with
      * "cvc-complex-type.4: Attribute 'sourceRef' must appear...") OR XML

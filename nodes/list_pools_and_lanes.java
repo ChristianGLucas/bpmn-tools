@@ -21,7 +21,7 @@ public class ListPoolsAndLanes {
      * flow nodes assigned to each lane, from a BPMN 2.0 collaboration
      * diagram. An empty {@code pools} list is normal, not an error — a bare,
      * single-process BPMN document with no {@code collaboration} element has
-     * no pools at all. Blank input, oversized input (over 5 MiB), malformed
+     * no pools at all. Blank input, malformed
      * XML, or input that fails BPMN 2.0 schema validation all return a
      * structured {@code error} instead of crashing.
      *

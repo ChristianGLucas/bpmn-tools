@@ -18,7 +18,7 @@ public class ListTasks {
      * a BPMN 2.0 document, across every top-level process. {@code type}
      * names the specific BPMN element (e.g. "userTask"); {@code process_id}
      * names the enclosing top-level process, even for a task nested inside
-     * an embedded sub-process. Blank input, oversized input (over 5 MiB),
+     * an embedded sub-process. Blank input,
      * malformed XML, or input that fails BPMN 2.0 schema validation all
      * return a structured {@code error} instead of crashing.
      *

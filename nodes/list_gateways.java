@@ -18,7 +18,7 @@ public class ListGateways {
      * {@code type} names the specific BPMN element (e.g.
      * "exclusiveGateway"); {@code gateway_direction} is the BPMN
      * {@code gatewayDirection} attribute ("Unspecified", "Converging",
-     * "Diverging", or "Mixed"). Blank input, oversized input (over 5 MiB),
+     * "Diverging", or "Mixed"). Blank input,
      * malformed XML, or input that fails BPMN 2.0 schema validation all
      * return a structured {@code error} instead of crashing.
      *

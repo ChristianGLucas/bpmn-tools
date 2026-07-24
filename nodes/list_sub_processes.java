@@ -19,7 +19,7 @@ public class ListSubProcesses {
      * defined, reusable process via {@code called_element}); {@code
      * parent_process_id} names the enclosing top-level process, even when
      * the sub-process is nested inside another sub-process. Blank input,
-     * oversized input (over 5 MiB), malformed XML, or input that fails BPMN
+     * malformed XML, or input that fails BPMN
      * 2.0 schema validation all return a structured {@code error} instead of
      * crashing.
      *

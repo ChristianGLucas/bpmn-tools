@@ -37,13 +37,6 @@ import java.util.Iterator;
  */
 final class BpmnUtil {
 
-    /**
-     * 5 MiB (5,242,880 bytes), measured on the raw UTF-8-encoded byte length
-     * and checked BEFORE any parsing is attempted — ample for any real
-     * process definition, including embedded BPMNDI diagram markup.
-     */
-    static final int MAX_XML_BYTES = 5 * 1024 * 1024;
-
     private BpmnUtil() {}
 
     /**
@@ -59,18 +52,15 @@ final class BpmnUtil {
     }
 
     /**
-     * Validates the size/blank contract on raw {@code xml} text and returns
-     * its UTF-8 bytes, or throws {@link Failure}.
+     * Validates the blank contract on raw {@code xml} text and returns its
+     * UTF-8 bytes, or throws {@link Failure}. Payload size is bounded by the
+     * platform, not by node code.
      */
     static byte[] requireSizedXml(String xml) {
         if (xml == null || xml.isBlank()) {
             throw new Failure("xml is required");
         }
-        byte[] bytes = xml.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > MAX_XML_BYTES) {
-            throw new Failure("xml exceeds the " + MAX_XML_BYTES + "-byte (5 MiB) input cap (got " + bytes.length + " bytes)");
-        }
-        return bytes;
+        return xml.getBytes(StandardCharsets.UTF_8);
     }
 
     /**

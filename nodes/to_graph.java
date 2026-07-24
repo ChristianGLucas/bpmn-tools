@@ -29,7 +29,7 @@ public class ToGraph {
      * inherent node ordering, so this is never a correctness concern, but
      * don't rely on it matching {@code ListTasks}/{@code ListGateways}/
      * {@code ListEvents}'s own (also type-grouped, not document-order)
-     * ordering either. Blank input, oversized input (over 5 MiB), malformed
+     * ordering either. Blank input, malformed
      * XML, or input that fails BPMN 2.0 schema validation all return a
      * structured {@code error} instead of crashing.
      *

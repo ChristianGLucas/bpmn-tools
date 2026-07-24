@@ -1,5 +1,5 @@
 name: christiangeorgelucas/bpmn-tools
-version: 0.1.0
+version: 0.1.1
 language: java
 description: Composable Axiom BPMN 2.0 (business-process model) nodes wrapping Camunda's BPMN Model API (org.camunda.bpm.model, Apache-2.0) — parse, validate, and structurally extract processes, tasks, gateways, events, sequence flows, pools/lanes, and sub-processes from BPMN 2.0 XML, plus a process-graph export for downstream graph-algorithm analysis. Offline, deterministic, stateless.
 author: Christian George Lucas

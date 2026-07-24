@@ -15,10 +15,9 @@ public class ListSequenceFlows {
     /**
      * Extract every sequence flow — source, target, and condition
      * expression (when present) — from a BPMN 2.0 document, across every
-     * top-level process: the process's edge list. Blank input, oversized
-     * input (over 5 MiB), malformed XML, or input that fails BPMN 2.0
-     * schema validation all return a structured {@code error} instead of
-     * crashing.
+     * top-level process: the process's edge list. Blank input, malformed
+     * XML, or input that fails BPMN 2.0 schema validation all return a
+     * structured {@code error} instead of crashing.
      *
      * <p>{@code ax} is the AxiomContext (ADR-001): every platform capability is
      * reached through it — {@code ax.log()}, {@code ax.secrets()},

@@ -55,12 +55,4 @@ public class ValidateTest {
         assertFalse(result.getValid());
         assertFalse(result.getError().isEmpty());
     }
-
-    @Test
-    public void testValidate_oversizedXmlSetsErrorBeforeParsing() {
-        AxiomContext ax = TestSupport.ax();
-        ValidateResult result = Validate.validate(ax, BpmnDocument.newBuilder().setXml(TestSupport.oversizedXml()).build());
-        assertFalse(result.getValid());
-        assertTrue(result.getError().toLowerCase().contains("cap"));
-    }
 }

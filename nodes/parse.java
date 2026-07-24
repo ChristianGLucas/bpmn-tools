@@ -20,7 +20,7 @@ public class Parse {
      * triage node to run before a more targeted extraction (ListTasks,
      * ListGateways, etc.). Parsing goes through Camunda's BPMN Model API,
      * which enforces the BPMN 2.0 XSD schema and is hardened against XXE.
-     * Blank input, oversized input (over 5 MiB), input that is not
+     * Blank input, input that is not
      * well-formed XML, or input that does not conform to the BPMN 2.0 schema
      * all return a structured {@code error} instead of crashing.
      *

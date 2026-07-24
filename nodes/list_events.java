@@ -23,7 +23,7 @@ public class ListEvents {
      * "cancel", or "" for a plain "none" event). {@code interrupting} is
      * meaningful only for a startEvent/boundaryEvent; {@code
      * attached_to_ref} is set only for a boundaryEvent. Blank input,
-     * oversized input (over 5 MiB), malformed XML, or input that fails BPMN
+     * malformed XML, or input that fails BPMN
      * 2.0 schema validation all return a structured {@code error} instead of
      * crashing.
      *
